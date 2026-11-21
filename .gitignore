@@ -1,0 +1,7 @@
+# --- 技能倉庫治理（由 manage.py init 加入） ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+*.bak
+*.bak-*

@@ -1,0 +1,37 @@
+{
+  "repository": "https://github.com/user/art",
+  "schema": 1,
+  "skills": [
+    {
+      "category": "content",
+      "name": "ai-food-shorts",
+      "params": [
+        {
+          "description": "企劃與文生圖階段需要，例如：蒜香奶油牛排",
+          "name": "<料理名稱>",
+          "requirement": "條件必填"
+        },
+        {
+          "description": "自動剪輯成片階段需要（需含 clips/*.mp4）",
+          "name": "<專案資料夾路徑>",
+          "requirement": "條件必填"
+        }
+      ],
+      "path": "ai-food-shorts",
+      "sha256": "6f17a6d11faf43665286b945867b04bbcfe1dd69a2fcec265bc05e6eed9b8189",
+      "triggers": [
+        "美食短片",
+        "AI做菜",
+        "food shorts",
+        "Google Flow"
+      ],
+      "type": "package",
+      "update_url": "https://raw.githubusercontent.com/user/art/main/ai-food-shorts/SKILL.md",
+      "usage": [
+        "請使用 ai-food-shorts 製作 <料理名稱> 的短片企劃與關鍵影格",
+        "請使用 ai-food-shorts 剪輯 <專案資料夾路徑> 的片段"
+      ],
+      "version": "0.1.0"
+    }
+  ]
+}

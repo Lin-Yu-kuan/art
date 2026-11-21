@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "repository": "https://github.com/user/art",
+  "repository": "https://github.com/Lin-Yu-kuan/art",
   "branch": "main",
   "site_name": "AI Art & Media Skills",
   "skills_dir": "~/.gemini/config/skills",
-  "author": "user"
+  "author": "Lin-Yu-kuan"
 }

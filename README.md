@@ -2,7 +2,7 @@
 
 收錄高品質的 AI Agent 技能集合（Skills），遵循標準通用 Agent Skill 規範，專為 **Google Antigravity** 及支援 Agent Skill 規範的 AI 工具打造。
 
-[![Total Skills](https://img.shields.io/badge/Skills-1%20個專業技能-purple.svg)](#-領域分類目錄-skill-catalog)
+[![Total Skills](https://img.shields.io/badge/Skills-2%20個專業技能-purple.svg)](#-領域分類目錄-skill-catalog)
 [![Domains](https://img.shields.io/badge/Domains-1%20大領域體系-blue.svg)](#-領域分類目錄-skill-catalog)
 [![Zero Download](https://img.shields.io/badge/Install-零下載雲端一行直裝-brightgreen.svg)](#-領域全家桶一鍵安裝-domain-bundles)
 [![Auto Update](https://img.shields.io/badge/Update-自然語言無感更新-orange.svg)](#-智慧無感自動更新已安裝者)
@@ -11,7 +11,7 @@
 
 ## 🧭 快速領域導覽
 
-- **✍️ 內容創作與個人社群 (Content & Social Voice)**（1）：[`ai-food-shorts`](./ai-food-shorts)
+- **✍️ 內容創作與個人社群 (Content & Social Voice)**（2）：[`ai-food-shorts`](./ai-food-shorts) 、 [`motion-showreel`](./motion-showreel)
 
 ---
 
@@ -19,7 +19,8 @@
 
 | 技能 | 版本 | 觸發詞 |
 |---|---|---|
-| [`ai-food-shorts`](./ai-food-shorts) | v0.1.0 | `美食短片`、`AI做菜`、`food shorts`、`Google Flow` |
+| [`ai-food-shorts`](./ai-food-shorts) | v0.2.1 | `美食短片`、`AI做菜`、`food shorts`、`Google Flow` |
+| [`motion-showreel`](./motion-showreel) | v0.2.2 | `動態圖形`、`motion graphics`、`片頭動畫`、`動效影片`、`code video` |
 
 ---
 
@@ -32,7 +33,8 @@
 
 | 技能名稱 | 版本 | 核心功能簡介 | 子類別 | 類型 | 說明文件 |
 |---|---|---|---|---|---|
-| [**ai-food-shorts**](./ai-food-shorts) | `v0.1.0` | 全 AI 美食 Shorts 製作流程：9:16 關鍵影格文生圖、Google Flow 圖生影 Prompt 與 FFmpeg ASMR 一鍵成片。 | `影像創作 / 短影音` | 📦 套件 | [查看說明](./ai-food-shorts/README.md) |
+| [**ai-food-shorts**](./ai-food-shorts) | `v0.2.1` | 半自動 AI 美食 Shorts 流程：9:16 關鍵影格文生圖、Google Flow 圖生影 Prompt、FFmpeg 一鍵成片（含字幕與響度正規化）。 | `影像創作 / 短影音` | 📦 套件 | [查看說明](./ai-food-shorts/README.md) |
+| [**motion-showreel**](./motion-showreel) | `v0.2.2` | 用程式碼逐幀渲染動態圖形影片：確定性 render(t) 加 ffmpeg 合成，輸出 MP4 與可重建原始碼，不需顯示卡。 | `影像創作 / 動態圖形` | 📦 套件 | [查看說明](./motion-showreel/README.md) |
 
 ---
 
@@ -43,25 +45,25 @@
 ### 🌟 方案 A：全庫技能一鍵全裝（一次擁有全部技能）
 - **Windows (PowerShell)**：
   ```powershell
-  $u="https://github.com/user/art/archive/refs/heads/main.zip"; $b="$HOME\.gemini\config\skills"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; @("ai-food-shorts") | ForEach-Object { $d="$b\$_"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\$_\*" $d -Recurse -Force -ErrorAction Stop }; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ AI Art & Media Skills 全庫 (1 個技能) 已成功安裝！" -ForegroundColor Green
+  $u="https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.zip"; $b="$HOME\.gemini\config\skills"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; @("ai-food-shorts","motion-showreel") | ForEach-Object { $d="$b\$_"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\$_\*" $d -Recurse -Force -ErrorAction Stop }; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ AI Art & Media Skills 全庫 (2 個技能) 已成功安裝！" -ForegroundColor Green
   ```
 - **macOS / Linux**：
   ```bash
-  mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/user/art/archive/refs/heads/main.tar.gz" | tar -xz -C "$HOME/.gemini/config/skills" --strip-components=1 "art-main/ai-food-shorts/" && echo "✅ AI Art & Media Skills 全庫 (1 個技能) 已成功安裝！"
+  mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.tar.gz" | tar -xz -C "$HOME/.gemini/config/skills" --strip-components=1 "art-main/ai-food-shorts/" "art-main/motion-showreel/" && echo "✅ AI Art & Media Skills 全庫 (2 個技能) 已成功安裝！"
   ```
 
 ### 📚 方案 B：按領域全家桶安裝
 <details>
 <summary><b>點擊展開各領域組合包一行直裝指令（國考包 / 開發治理包 / 前端創作包）</b></summary>
 
-#### ✍️ 內容創作與個人社群 (Content & Social Voice)（含 `ai-food-shorts`）
+#### ✍️ 內容創作與個人社群 (Content & Social Voice)（含 `ai-food-shorts` + `motion-showreel`）
 - **Windows (PowerShell)**：
   ```powershell
-  $u="https://github.com/user/art/archive/refs/heads/main.zip"; $b="$HOME\.gemini\config\skills"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; @("ai-food-shorts") | ForEach-Object { $d="$b\$_"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\$_\*" $d -Recurse -Force -ErrorAction Stop }; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ 社群創作 / 語氣改寫 全家桶已安裝完成！" -ForegroundColor Green
+  $u="https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.zip"; $b="$HOME\.gemini\config\skills"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; @("ai-food-shorts","motion-showreel") | ForEach-Object { $d="$b\$_"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\$_\*" $d -Recurse -Force -ErrorAction Stop }; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ 社群創作 / 語氣改寫 全家桶已安裝完成！" -ForegroundColor Green
   ```
 - **macOS / Linux**：
   ```bash
-  mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/user/art/archive/refs/heads/main.tar.gz" | tar -xz -C "$HOME/.gemini/config/skills" --strip-components=1 "art-main/ai-food-shorts/" && echo "✅ 社群創作 / 語氣改寫 全家桶已安裝完成！"
+  mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.tar.gz" | tar -xz -C "$HOME/.gemini/config/skills" --strip-components=1 "art-main/ai-food-shorts/" "art-main/motion-showreel/" && echo "✅ 社群創作 / 語氣改寫 全家桶已安裝完成！"
   ```
 
 </details>
@@ -127,10 +129,18 @@ AI Art & Media Skills/
 ├── .github/workflows/skills-ci.yml # 推送時自動執行 lint、sync --check 與測試
 ├── scripts/
 │   └── manage.py                  # 技能規範體檢 (lint) 與總目錄自動生成 (sync) 工具
-└── ai-food-shorts/                # [影像創作 / 短影音]
+├── ai-food-shorts/                # [影像創作 / 短影音]
+│   ├── SKILL.md
+│   ├── README.md
+│   ├── assets/
+│   ├── projects/
+│   ├── references/
+│   └── scripts/
+└── motion-showreel/               # [影像創作 / 動態圖形]
     ├── SKILL.md
     ├── README.md
     ├── assets/
+    ├── LICENSE.upstream
     ├── references/
     └── scripts/
 ```

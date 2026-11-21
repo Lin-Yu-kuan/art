@@ -1,5 +1,5 @@
 {
-  "repository": "https://github.com/user/art",
+  "repository": "https://github.com/Lin-Yu-kuan/art",
   "schema": 1,
   "skills": [
     {
@@ -12,13 +12,13 @@
           "requirement": "條件必填"
         },
         {
-          "description": "自動剪輯成片階段需要（需含 clips/*.mp4）",
+          "description": "自動剪輯階段需要（需含 clips/*.mp4）",
           "name": "<專案資料夾路徑>",
           "requirement": "條件必填"
         }
       ],
       "path": "ai-food-shorts",
-      "sha256": "6f17a6d11faf43665286b945867b04bbcfe1dd69a2fcec265bc05e6eed9b8189",
+      "sha256": "88211a0a7edc5234e40c498bea3d045ee4a77bd3ef70233a5d4b4df7679af35d",
       "triggers": [
         "美食短片",
         "AI做菜",
@@ -26,12 +26,44 @@
         "Google Flow"
       ],
       "type": "package",
-      "update_url": "https://raw.githubusercontent.com/user/art/main/ai-food-shorts/SKILL.md",
+      "update_url": "https://raw.githubusercontent.com/Lin-Yu-kuan/art/main/ai-food-shorts/SKILL.md",
       "usage": [
         "請使用 ai-food-shorts 製作 <料理名稱> 的短片企劃與關鍵影格",
         "請使用 ai-food-shorts 剪輯 <專案資料夾路徑> 的片段"
       ],
-      "version": "0.1.0"
+      "version": "0.2.1"
+    },
+    {
+      "category": "content",
+      "name": "motion-showreel",
+      "params": [
+        {
+          "description": "影片要講什麼，例如：季度產品發布片頭",
+          "name": "<主題>",
+          "requirement": "必填"
+        },
+        {
+          "description": "秒數，上限 1200 秒",
+          "name": "<時長>",
+          "requirement": "必填"
+        }
+      ],
+      "path": "motion-showreel",
+      "sha256": "701cbcbcdb018c40f76022d7b04d02cbfb979bd4b71118dcf4cfd3ae3240c8e1",
+      "triggers": [
+        "動態圖形",
+        "motion graphics",
+        "片頭動畫",
+        "動效影片",
+        "code video"
+      ],
+      "type": "package",
+      "update_url": "https://raw.githubusercontent.com/Lin-Yu-kuan/art/main/motion-showreel/SKILL.md",
+      "usage": [
+        "請使用 motion-showreel 製作一支 <主題> 的 <時長> 動態圖形短片",
+        "請使用 motion-showreel 把 <腳本或文章> 做成帶旁白的解說影片"
+      ],
+      "version": "0.2.2"
     }
   ]
 }

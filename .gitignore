@@ -5,3 +5,6 @@ __pycache__/
 .coverage
 *.bak
 *.bak-*
+
+# --- 技能執行期產物 ---
+node_modules/

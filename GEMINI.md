@@ -9,7 +9,7 @@
 ## 零、倉庫架構原則：實體扁平相容・邏輯領域分群
 
 1. **禁止將技能搬移至深層巢狀子資料夾**（例如禁止改為 `categories/exam/essay-solver/`）：
-   - 所有技能目錄必須直接位於倉庫根目錄下（`AI Art & Media Skills/<skill-name>/`），以確保對外發布的 `update_url`（`https://raw.githubusercontent.com/user/art/main/<skill-name>/SKILL.md`）與雲端一鍵安裝腳本 **100% 永久向後相容**。
+   - 所有技能目錄必須直接位於倉庫根目錄下（`AI Art & Media Skills/<skill-name>/`），以確保對外發布的 `update_url`（`https://raw.githubusercontent.com/Lin-Yu-kuan/art/main/<skill-name>/SKILL.md`）與雲端一鍵安裝腳本 **100% 永久向後相容**。
 2. **透過 Frontmatter 進行邏輯領域分類**：
    - 每個技能於 `SKILL.md` 的 YAML Frontmatter 中宣告 `category`（領域代碼）、`category_label`（子類別標籤）與 `summary`（首頁表格簡介）。
    - 標準五大領域代碼（`category`）：
@@ -38,11 +38,11 @@
 - **特徵**：僅由 `SKILL.md` 組成，無附屬的 `scripts/` 或 `resources/` 資料夾（單檔技能）。
 - **PowerShell 語法**：
   ```powershell
-  $d="$HOME\.gemini\config\skills\<skill-name>"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/user/art/main/<skill-name>/SKILL.md" -OutFile "$d\SKILL.md.new"; Move-Item "$d\SKILL.md.new" "$d\SKILL.md" -Force; Write-Host "✅ <skill-name> 技能已成功安裝！" -ForegroundColor Green
+  $d="$HOME\.gemini\config\skills\<skill-name>"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Lin-Yu-kuan/art/main/<skill-name>/SKILL.md" -OutFile "$d\SKILL.md.new"; Move-Item "$d\SKILL.md.new" "$d\SKILL.md" -Force; Write-Host "✅ <skill-name> 技能已成功安裝！" -ForegroundColor Green
   ```
 - **macOS / Linux 語法**：
   ```bash
-  mkdir -p "$HOME/.gemini/config/skills/<skill-name>" && curl -fsSL "https://raw.githubusercontent.com/user/art/main/<skill-name>/SKILL.md" -o "$HOME/.gemini/config/skills/<skill-name>/SKILL.md.new" && mv "$HOME/.gemini/config/skills/<skill-name>/SKILL.md.new" "$HOME/.gemini/config/skills/<skill-name>/SKILL.md" && echo "✅ <skill-name> 技能已成功安裝！"
+  mkdir -p "$HOME/.gemini/config/skills/<skill-name>" && curl -fsSL "https://raw.githubusercontent.com/Lin-Yu-kuan/art/main/<skill-name>/SKILL.md" -o "$HOME/.gemini/config/skills/<skill-name>/SKILL.md.new" && mv "$HOME/.gemini/config/skills/<skill-name>/SKILL.md.new" "$HOME/.gemini/config/skills/<skill-name>/SKILL.md" && echo "✅ <skill-name> 技能已成功安裝！"
   ```
 
 ---
@@ -52,11 +52,11 @@
 - **PowerShell 語法（純原生、免 Git、免第三方工具）**：
   利用 GitHub Archive Zip 串流解壓單一子目錄，並使用**每次唯一的暫存路徑**避免殘留與競態：
   ```powershell
-  $u="https://github.com/user/art/archive/refs/heads/main.zip"; $d="$HOME\.gemini\config\skills\<skill-name>"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\<skill-name>\*" $d -Recurse -Force -ErrorAction Stop; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ <skill-name> 技能套件已成功安裝！" -ForegroundColor Green
+  $u="https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.zip"; $d="$HOME\.gemini\config\skills\<skill-name>"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\<skill-name>\*" $d -Recurse -Force -ErrorAction Stop; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ <skill-name> 技能套件已成功安裝！" -ForegroundColor Green
   ```
 - **macOS / Linux 語法（原生 curl + tar 串流提取特定目錄）**：
   ```bash
-  mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/user/art/archive/refs/heads/main.tar.gz" | tar -xz -C "$HOME/.gemini/config/skills" --strip-components=1 "art-main/<skill-name>/" && echo "✅ <skill-name> 技能套件已成功安裝！"
+  mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.tar.gz" | tar -xz -C "$HOME/.gemini/config/skills" --strip-components=1 "art-main/<skill-name>/" && echo "✅ <skill-name> 技能套件已成功安裝！"
   ```
 
 ---
@@ -114,8 +114,8 @@ description: >-
   [技能觸發說明與適用範圍]
   亦支援在使用者要求「更新此技能 / 檢查最新版本」時自動調用以進行線上更新。
 triggers: ["<觸發詞1>", "<觸發詞2>", "<觸發詞3>"]
-repository: https://github.com/user/art
-update_url: https://raw.githubusercontent.com/user/art/main/<skill-name>/SKILL.md
+repository: https://github.com/Lin-Yu-kuan/art
+update_url: https://raw.githubusercontent.com/Lin-Yu-kuan/art/main/<skill-name>/SKILL.md
 ---
 ```
 - **`version`**：語意化版本（`MAJOR.MINOR.PATCH`），是自動更新「先比對、後覆寫」的依據；有 `plugin.json` 的技能，兩者版本號必須一致（`lint` 會檢查）。

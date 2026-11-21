@@ -1,0 +1,15 @@
+{
+  "name": "motion-showreel-tools",
+  "private": true,
+  "type": "module",
+  "description": "Render / audio / QA tools for the motion-showreel skill. Playwright renders frames, Tone.js powers tier-2 audio; ffmpeg must be on PATH.",
+  "dependencies": {
+    "playwright": "^1.55.0",
+    "tone": "15.1.22"
+  },
+  "scripts": {
+    "test": "npm run test:full",
+    "test:smoke": "node --test test/render-context.test.mjs test/narration-clock.test.mjs test/starter.test.mjs",
+    "test:full": "node --test --test-concurrency=1 test/*.test.mjs"
+  }
+}

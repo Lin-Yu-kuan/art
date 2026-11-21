@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Motion Studio</title>
+  <link rel="stylesheet" href="/__showreel-editor/editor.css">
+  <link rel="stylesheet" href="/__showreel-editor/viewport.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="https://github.com/ConardLi/garden-skills" target="_blank" rel="noopener noreferrer" title="開啟 garden skills GitHub 倉庫">garden skills</a>
+    <span class="project-title" id="project-name">工作區</span>
+    <div class="top-actions">
+      <button id="toggle-progress" aria-expanded="false" aria-controls="progress-panel" hidden><i class="status-dot"></i><span class="sr-only">製作進度</span><span id="current-stage">製作進度</span></button>
+      <button id="toggle-inspector" aria-expanded="false" aria-controls="sound-panel">調音</button>
+      <button id="save" aria-label="儲存" title="儲存編輯（⌘/Ctrl S）">儲存</button>
+      <button id="export" class="primary">匯出影片 <span aria-hidden="true">↗</span></button>
+    </div>
+  </header>
+  <main id="workspace">
+    <section class="viewer-panel" aria-label="影片預覽">
+      <div class="viewer-heading">
+        <span class="viewer-title">預覽</span><span id="stage-label"></span><select id="shot-picker" aria-label="切換預覽鏡頭" hidden></select><span id="spec"></span><button id="switch" hidden>檢視新版本</button>
+        <div class="view-tools" role="group" aria-label="畫面顯示">
+          <button id="zoom-out" aria-label="縮小畫面" title="縮小畫面">−</button>
+          <select id="viewer-zoom" aria-label="畫面縮放"><option value="fit">適應</option><option value="25">25%</option><option value="50">50%</option><option value="100">100%</option><option value="150">150%</option><option value="200">200%</option></select>
+          <button id="zoom-in" aria-label="放大畫面" title="放大畫面">+</button>
+          <button id="fit-view" aria-label="適應視窗" title="適應視窗">⊡</button>
+          <button id="maximize-view" aria-label="最大化預覽" aria-pressed="false" title="最大化預覽">⛶</button>
+        </div>
+      </div>
+      <div class="viewer" id="viewer">
+        <div class="frame-wrap" id="frame-wrap"><iframe id="scene" title="原始動畫場景" sandbox="allow-scripts allow-same-origin"></iframe></div>
+        <div class="viewer-loading" id="loading"><span>正在載入預覽…</span></div>
+        <div id="placeholder" hidden><div class="placeholder-symbol">◫</div><h1>等待首個階段成果</h1><p>完成的畫面與聲音會顯示在這裡</p></div>
+        <section id="artifact-view" aria-label="階段成果預覽" hidden><button id="close-artifact" aria-label="關閉階段成果">返回預覽 <span aria-hidden="true">×</span></button><div id="artifact-content"></div></section>
+      </div>
+      <div class="transport">
+        <div class="clock-group"><span class="timecode" id="clock">00:00.00</span><span class="duration" id="duration"></span></div>
+        <div class="play-controls"><button id="prev" aria-label="上一幀" title="上一幀（←）">Ⅰ‹</button><button id="play" aria-label="播放" title="播放 / 暫停（Space）" class="play">▶</button><button id="next" aria-label="下一幀" title="下一幀（→）">›Ⅰ</button></div>
+        <a id="scene-link" target="_blank" rel="noopener" title="單獨開啟原場景">原畫面 ↗</a>
+      </div>
+    </section>
+    <aside class="inspector" id="sound-panel" aria-label="聲音調整">
+      <div class="panel-heading"><strong>聲音調整</strong><button id="reset">恢復原版</button></div>
+      <div id="inspector"></div>
+      <details class="source-details"><summary>音訊素材 <span id="source-count"></span></summary><div id="sources"></div></details>
+    </aside>
+    <div id="panel-divider" role="separator" aria-label="調整畫面與時間線高度" aria-orientation="horizontal" tabindex="0" title="上下拖動調整區域高度；雙擊恢復"><span></span></div>
+    <section class="timeline-panel" aria-label="時間線">
+      <div class="timeline-toolbar">
+        <div class="tool-group"><button id="undo" title="撤銷（⌘/Ctrl Z）" aria-label="撤銷">↶</button><button id="redo" title="重做（⌘/Ctrl Shift Z）" aria-label="重做">↷</button><span class="separator"></span><button id="split" title="在播放頭切分 BGM 或音效（S）">切分</button><button id="delete" title="移除選中片段">移除</button></div>
+        <span id="audio-state" role="status" class="sr-only"></span>
+        <div class="zoom-controls"><button id="apply" title="重新生成當前編輯的試聽音訊">更新試聽</button><label title="時間線縮放"><span class="timeline-zoom-label">時間線</span><input id="zoom" type="range" min="1" max="12" step="0.25" value="1" aria-label="時間線縮放"></label></div>
+      </div>
+      <div class="timeline-scroll" id="timeline-scroll"><div class="timeline-content" id="timeline-content">
+        <div class="ruler-row"><div class="track-label ruler-label">軌道 <span>秒</span></div><div class="ruler" id="ruler"></div></div>
+        <div id="tracks"></div><div class="playhead" id="playhead"><span></span></div>
+      </div></div>
+      <div class="timeline-footer"><label class="loop-toggle"><input id="loop" type="checkbox">循環選區</label><div class="range-fields"><input id="range-start" type="number" min="0" step="0.1" value="0" aria-label="選區開始"><span>—</span><input id="range-end" type="number" min="0" step="0.1" aria-label="選區結束"><span>s</span></div></div>
+    </section>
+  </main>
+  <aside id="progress-panel" aria-label="製作進度" hidden>
+    <div class="panel-heading"><strong>製作進度</strong><button id="close-progress" aria-label="關閉製作進度">×</button></div>
+    <p id="progress-message" role="status"></p><p id="progress-sync-warning" role="status" hidden></p><div id="artifacts"><div id="stages"></div></div>
+    <div class="progress-settings"><label><input type="checkbox" id="auto" checked>自動切換階段版本</label></div>
+    <span id="progress-connection"></span>
+  </aside>
+  <footer class="statusbar"><span id="message" role="status"></span><span id="save-status" role="status"></span></footer>
+  <section class="job-panel" id="job-panel" hidden aria-label="匯出任務"><div><strong id="job-title">正在處理</strong><button id="cancel-job">取消任務</button></div><progress id="job-progress" max="1" value="0"></progress><p id="job-phase"></p><pre id="job-log"></pre><a id="download" hidden download>下載 MP4 ↗</a><button id="close-job" hidden>關閉</button></section>
+  <script type="module" src="/__showreel-editor/editor.js"></script>
+</body>
+</html>

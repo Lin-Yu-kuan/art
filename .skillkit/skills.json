@@ -18,7 +18,7 @@
         }
       ],
       "path": "ai-food-shorts",
-      "sha256": "88211a0a7edc5234e40c498bea3d045ee4a77bd3ef70233a5d4b4df7679af35d",
+      "sha256": "3a646d42119b1bc3a588272d61b813cbc40da4cfef9e2fd662b07d1605d52d7a",
       "triggers": [
         "美食短片",
         "AI做菜",
@@ -49,7 +49,7 @@
         }
       ],
       "path": "motion-showreel",
-      "sha256": "701cbcbcdb018c40f76022d7b04d02cbfb979bd4b71118dcf4cfd3ae3240c8e1",
+      "sha256": "60d36cf8d7aaddf4c27ea0b03a2ad0f61b9ad18847f68cdfd7a6a8b9ac913c50",
       "triggers": [
         "動態圖形",
         "motion graphics",

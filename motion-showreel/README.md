@@ -39,33 +39,18 @@
 ```bash
 sh scripts/setup.sh        # 安裝 Playwright + Chromium，並跑 check-env
 node scripts/check-env.mjs # 只檢查，不安裝
-cd scripts && npm run test:smoke   # 快速自檢（約 15 秒）
+cd scripts && npm run test:smoke   # 快速自檢（約 15 秒；Windows 需於 Git Bash 執行）
 cd scripts && npm run test:full    # 完整測試（含整片渲染，10–30 分鐘）
 ```
 
-## 🚀 安裝
+## 🚀 Antigravity 一鍵安裝方式
 
 > ⚠️ **必須整包安裝**。`SKILL.md` 依賴 `references/`、`scripts/` 與 `assets/`，只複製 `SKILL.md` 會得到一個跑不動的技能。
-
-### WorkBuddy
-
-```bash
-git clone https://github.com/Lin-Yu-kuan/art /tmp/art-src
-cp -r /tmp/art-src/motion-showreel "$HOME/.workbuddy-ai/skills/motion-showreel"
-```
-
-Windows PowerShell：
-
-```powershell
-Copy-Item -Path ".\motion-showreel" -Destination "$HOME\.workbuddy-ai\skills\motion-showreel" -Recurse -Force
-```
-
-### Antigravity / Gemini
 
 ### 🌐 免下載！Windows (PowerShell) 雲端一行直裝
 
 ```powershell
-$u="https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.zip"; $b="$HOME\.gemini\config\skills"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; @("motion-showreel") | ForEach-Object { $d="$b\$_"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\$_\*" $d -Recurse -Force -ErrorAction Stop }; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ motion-showreel 技能套件已成功安裝！" -ForegroundColor Green
+$u="https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.zip"; $d="$HOME\.gemini\config\skills\motion-showreel"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\motion-showreel\*" $d -Recurse -Force -ErrorAction Stop; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ motion-showreel 技能套件已成功安裝！" -ForegroundColor Green
 ```
 
 ### 🍎 免下載！macOS / Linux 雲端一行直裝
@@ -168,7 +153,7 @@ motion-showreel/
 | 驗收 FAIL：`duration` 不符 | `DUR` 與實際幀數不一致 | 改 `DUR` 或重新確認片長，不要手動改檢查參數 |
 | 驗收顯示 `NOT CHECKED` | 沒傳 `--expect-*` | 補上尺寸、幀率、時長、`--audio` 後重跑 |
 | 工作區改了音軌但匯出沒變化 | 改了工作階段卻繞回 `build.sh` 原混音 | 用工作區「匯出影片」，或先寫回 `audio/final.wav` |
-| Windows 執行 `sh` 失敗 | 沒有 POSIX shell | 裝 Git for Windows，用 Git Bash 執行 `sh scripts/...` |
+| Windows 執行 `sh` 失敗或 `test:smoke` 報 `spawnSync sh ENOENT` | 沒有 POSIX shell（PowerShell 環境下 `starter.test.mjs` 找不到 `sh`） | 裝 Git for Windows，用 Git Bash 執行 `sh scripts/...` 或 `npm run test:smoke` |
 | Windows 跑 `test:full` 出現 `spawn ENAMETOOLONG`／`EPERM: symlink` | 測試用到超長命令列與 symlink，Windows 需管理員或開發人員模式 | 本機只跑 `npm run test:smoke`；`test:full` 交給 CI 或 WSL |
 | `npm test` 跑很久 | 測試真的在渲幀與編碼 | 用 `npm run test:smoke` 快速自檢，`npm run test:full` 交付前跑 |
 
@@ -180,7 +165,7 @@ motion-showreel/
 - **對話語言約定**：新增語言條款，對話、`brief.md`、畫面文案與字幕預設使用台灣繁體中文。
 - **更新流程改為整包覆蓋**：原本只覆寫 `SKILL.md`，會造成 `scripts/`、`references/` 與文件版本漂移；改為下載整包、驗證 `SKILL.md` SHA-256、備份整個資料夾後覆蓋。
 - **倉庫位址**：`repository`／`update_url` 從佔位符 `user/art` 改為 `Lin-Yu-kuan/art`。
-- **README**：補 WorkBuddy 安裝方式、疑難排解與本 Changelog；`formats.md` 更正為 10 類用途。
+- **README**：補充疑難排解與本 Changelog；`formats.md` 更正為 10 類用途。
 - **測試分層**：新增 `test:smoke`（快速自檢）與 `test:full`（完整渲染），CI 只跑 smoke。
 
 ### 0.2.1

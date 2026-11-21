@@ -23,34 +23,27 @@
   - 驗證：`ffmpeg -filters | grep ass` 有輸出即可
 - 產出物：1080×1920 / 30fps / H.264 / AAC 192k
 
-## 安裝
+## 🚀 Antigravity 一鍵安裝方式
 
 > ⚠️ **必須整包安裝**。`SKILL.md` 依賴 `references/` 與 `scripts/`，只複製 SKILL.md 會得到一個跑不動的技能。
 
-### WorkBuddy
-
-```bash
-git clone <repo-url> /tmp/ai-food-shorts-src
-cp -r /tmp/ai-food-shorts-src/ai-food-shorts "$HOME/.workbuddy-ai/skills/ai-food-shorts"
-```
-
-Windows PowerShell：
+### 🌐 免下載！Windows (PowerShell) 雲端一行直裝
 
 ```powershell
-Copy-Item -Path ".\ai-food-shorts" -Destination "$HOME\.workbuddy-ai\skills\ai-food-shorts" -Recurse -Force
+$u="https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.zip"; $d="$HOME\.gemini\config\skills\ai-food-shorts"; $t=Join-Path $env:TEMP ("skills-"+[guid]::NewGuid()); Invoke-WebRequest $u -OutFile "$t.zip" -ErrorAction Stop; Expand-Archive "$t.zip" $t -Force -ErrorAction Stop; New-Item -ItemType Directory -Path $d -Force | Out-Null; Copy-Item "$t\art-main\ai-food-shorts\*" $d -Recurse -Force -ErrorAction Stop; Remove-Item "$t.zip",$t -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "✅ ai-food-shorts 技能套件已成功安裝！" -ForegroundColor Green
 ```
 
-### Antigravity / Gemini
-
-```powershell
-Copy-Item -Path ".\ai-food-shorts" -Destination "$HOME\.gemini\config\skills\ai-food-shorts" -Recurse -Force
-```
+### 🍎 免下載！macOS / Linux 雲端一行直裝
 
 ```bash
-cp -r ./ai-food-shorts "$HOME/.gemini/config/skills/ai-food-shorts"
+mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/Lin-Yu-kuan/art/archive/refs/heads/main.tar.gz" | tar -xz -C "$HOME/.gemini/config/skills" --strip-components=1 "art-main/ai-food-shorts/" && echo "✅ ai-food-shorts 技能套件已成功安裝！"
 ```
 
-### 本機開發（Symlink，改動即時生效）
+### 💬 免開終端機！聊天框「自然語言安裝」
+
+> 「請幫我從 GitHub 安裝 `Lin-Yu-kuan/art` 的 `ai-food-shorts` 技能到我的技能目錄。」
+
+### 💻 本機維護者軟連結（Symlink，改動即時生效）
 
 Windows 需管理員權限或開啟開發人員模式：
 
@@ -60,6 +53,16 @@ New-Item -ItemType SymbolicLink -Path "$HOME\.gemini\config\skills\ai-food-short
 
 ```bash
 ln -sfn "$(pwd)" "$HOME/.gemini/config/skills/ai-food-shorts"
+```
+
+### 📁 已 Clone 完整倉庫者的本地安裝
+
+```powershell
+Copy-Item -Path ".\ai-food-shorts" -Destination "$HOME\.gemini\config\skills\ai-food-shorts" -Recurse -Force
+```
+
+```bash
+cp -r ./ai-food-shorts "$HOME/.gemini/config/skills/ai-food-shorts"
 ```
 
 ## 使用

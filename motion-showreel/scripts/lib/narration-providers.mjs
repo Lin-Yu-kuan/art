@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -109,7 +110,78 @@ export async function createProvider({ name, model, voice, env = process.env, fe
       },
     };
   }
-  if (!name) throw new Error('Choose --provider gemini|minimax|/absolute/custom.mjs');
+  if (name === 'openai') {
+    model ||= env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts';
+    voice ||= env.OPENAI_TTS_VOICE || 'alloy';
+    if (!env.OPENAI_API_KEY) throw new Error('Set OPENAI_API_KEY in the environment');
+    const base = (env.OPENAI_TTS_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+    const url = endpoint(`${base}/audio/speech`);
+    const format = env.OPENAI_TTS_FORMAT || 'wav';
+    const speed = Number(env.OPENAI_TTS_SPEED || 1);
+    if (!(speed >= 0.25 && speed <= 4)) throw new Error('OPENAI_TTS_SPEED must be between 0.25 and 4');
+    return {
+      id: 'openai', model, voice, cacheKey: hash(JSON.stringify({ provider: 'openai-v1', model, voice, url: url.href, format, speed })),
+      async synthesize({ text, outFile }) {
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetchImpl(url, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, input: text, voice, response_format: format, speed }),
+            signal: controller.signal,
+          });
+          if (!response.ok) throw new ProviderError(`OpenAI TTS HTTP ${response.status} (response omitted to protect credentials)`, response.status === 429 || response.status >= 500);
+          const bytes = Buffer.from(await response.arrayBuffer());
+          if (!bytes.length) throw new ProviderError('OpenAI TTS returned empty audio', true);
+          fs.writeFileSync(outFile, bytes);
+        } catch (error) {
+          if (error instanceof ProviderError) throw error;
+          throw new ProviderError('OpenAI TTS request failed or timed out', true);
+        } finally { clearTimeout(timer); }
+      },
+    };
+  }
+  if (name === 'edge') {
+    model ||= 'edge-tts';
+    voice ||= env.EDGE_TTS_VOICE || 'zh-TW-HsiaoChenNeural';
+    const rate = env.EDGE_TTS_RATE || '+0%';
+    const py = env.EDGE_TTS_PYTHON || 'python';
+    const runner = env.EDGE_TTS_RUNNER ? path.resolve(env.EDGE_TTS_RUNNER) : null;
+    const pyCode = [
+      'import asyncio, json, sys, edge_tts',
+      'async def main():',
+      '  text, voice, rate, out_mp3, out_words = sys.argv[1:6]',
+      '  comm = edge_tts.Communicate(text, voice, rate=rate, boundary="WordBoundary")',
+      '  words = []',
+      '  with open(out_mp3, "wb") as f:',
+      '    async for chunk in comm.stream():',
+      '      if chunk["type"] == "audio": f.write(chunk["data"])',
+      '      elif chunk["type"] == "WordBoundary":',
+      '        s = chunk["offset"] / 10_000_000; d = chunk["duration"] / 10_000_000',
+      '        words.append({"text": chunk["text"], "start": round(s, 6), "end": round(s + d, 6)})',
+      '  with open(out_words, "w", encoding="utf-8") as wf: json.dump(words, wf, ensure_ascii=False)',
+      'asyncio.run(main())',
+    ].join('\n');
+    return {
+      id: 'edge', model, voice, cacheKey: hash(JSON.stringify({ provider: 'edge-v1', voice, rate })),
+      async synthesize({ text, outFile }) {
+        const wordsFile = `${outFile}.words.json`;
+        try {
+          if (runner) execFileSync(process.execPath, [runner, text, voice, rate, outFile, wordsFile], { stdio: ['ignore', 'pipe', 'pipe'] });
+          else execFileSync(py, ['-c', pyCode, text, voice, rate, outFile, wordsFile], { stdio: ['ignore', 'pipe', 'pipe'], timeout: timeoutMs });
+          const words = fs.existsSync(wordsFile) ? JSON.parse(fs.readFileSync(wordsFile, 'utf8')) : [];
+          return { words };
+        } catch (error) {
+          const stderr = String(error?.stderr || error?.message || '');
+          if (/No module named ['"]edge_tts['"]/i.test(stderr)) throw new ProviderError('edge-tts is not installed; run `pip install edge-tts`', false);
+          throw new ProviderError(`Edge TTS failed: ${stderr.trim().split('\n').pop() || 'unknown error'}`, true);
+        } finally {
+          fs.rmSync(wordsFile, { force: true });
+        }
+      },
+    };
+  }
+  if (!name) throw new Error('Choose --provider edge|gemini|minimax|openai|/absolute/custom.mjs');
   const file = path.resolve(name);
   if (!fs.existsSync(file)) throw new Error('Unknown TTS provider; use gemini, minimax, or an existing local .mjs adapter');
   const mod = await import(pathToFileURL(file).href);

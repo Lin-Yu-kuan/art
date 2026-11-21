@@ -129,8 +129,9 @@ node <skill>/scripts/preview.mjs <slug> --size 1080x1920 --audio audio/final.wav
 ## 9. 字型
 
 - **自託管**：把 `.woff2` 放進 `fonts/`，用 `@font-face` 宣告，`loadFonts()` 等它載入完再 READY。渲染時不要連結 Google Fonts。
+- **一鍵下載繁中字型（推薦）**：直接執行 `node <skill>/scripts/fonts.mjs fetch <slug> --family "Noto Sans TC" --weights 400,700,900 --from <slug>/brief.md`，工具會依文案提取字元子集、下載 `.woff2` 到 `fonts/` 並產生 `fonts/fonts.css`（可用 `node <skill>/scripts/fonts.mjs list` 查看預設字型清單）。
 - 拉取開源字型：`https://github.com/google/fonts/tree/main/ofl/<family>`（OFL 授權）。
-- **中文**：完整的 CJK 字型有幾 MB 到十幾 MB。可以按用到的字做子集：Google Fonts CSS API 帶 `&text=` 引數，只返回這些字的字形，例如 `https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@900&text=<URL 編碼的文字>`，把它指向的字型檔案下載到 `fonts/` 再本地載入。文案改了要重新做子集。沒有網路時用系統字型兜底：`"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif`（不同機器渲染結果會不一樣，在交付說明裡寫明）。
+- **台灣繁體中文**：完整的 CJK 字型有幾 MB 到十幾 MB。除了使用 `fonts.mjs` 自動子集化外，也可手動透過 Google Fonts CSS2 API 帶 `&text=` 參數下載：`https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@900&text=<URL 編碼的文字>`。文案改了要重新做子集。沒有網路時用台灣繁中系統字型兜底：`"PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", sans-serif`（不同機器渲染結果會不一樣，在交付說明裡寫明）。
 - 數字跳動用 `font-variant-numeric: tabular-nums`（Canvas 裡選等寬數字的字型）。
 
 ## 10. 素材

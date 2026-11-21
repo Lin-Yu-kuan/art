@@ -1,6 +1,6 @@
 ---
 name: motion-showreel
-version: 0.2.2
+version: 0.3.0
 category: content
 category_label: 影像創作 / 動態圖形
 summary: 用程式碼逐幀渲染動態圖形影片：確定性 render(t) 加 ffmpeg 合成，輸出 MP4 與可重建原始碼，不需顯示卡。
@@ -27,7 +27,7 @@ upstream: https://github.com/ConardLi/garden-skills/tree/main/skills/motion-show
 
 **不需要顯示卡、不需要模型、不需要雲端 API**（只有要 TTS 旁白時才需要對應的 API 設定）。這是「用程式碼畫動畫」，不是擴散模型生成影片。
 
-**語言**：與使用者對話、`brief.md`、畫面文案與字幕一律使用台灣繁體中文（zh-TW），不要輸出簡體中文；使用者明確指定其他語言或品牌用語時，依其指定，並在 brief 記下。
+**語言與台灣預設配置**：與使用者對話、`brief.md`、畫面文案、字幕與配音預設一律使用**台灣繁體中文（`zh-TW`）與台灣口音／字型配置**，不要輸出簡體中文；字型優先使用 `fonts.mjs` 下載的台灣繁中字型（預設 `Noto Sans TC`）或 `PingFang TC` / `Microsoft JhengHei`；選用 AI TTS 且未指定其他服務時，預設使用免 API Key 的 Edge TTS 台灣口音（女聲 `zh-TW-HsiaoChenNeural`、男聲 `zh-TW-YunJheNeural`）。使用者明確指定其他語言、字型或口音時，依其指定，並在 brief 記下。
 
 **預設先預覽，再匯出**：所有類型都先開啟剪輯工作區讓使用者檢視真實畫面與聲音。使用者點選「匯出影片」或在對話中確認預覽通過、可以匯出後，才合成 MP4。首次要求「做一個影片」不等於預覽已經通過；只有使用者明確免除預覽時才能直接匯出。靜幀、自查和音訊準備可提前進行，不預設生成代理 MP4 或整片樣片。
 
@@ -93,7 +93,7 @@ upstream: https://github.com/ConardLi/garden-skills/tree/main/skills/motion-show
 | 音效來源 | AI 自主合成／使用者提供；與 BGM 分開選擇，也可關閉 |
 | 口播方式 | 無口播／AI TTS／使用者提供錄音 |
 
-**條件必填**：選 TTS 時必須由使用者提供口播稿，不代寫、不補寫、不改寫後擅自合成；同時明確 TTS 服務及所需 API 設定（已有設定重用，憑證用環境變數，不寫進 brief）。支援 Gemini、MiniMax 和自訂適配器，按需讀 `references/narration.md`。選使用者錄音時，需要錄音檔或可存取位址；選使用者 BGM／音效時，需要相應檔案。口播語言、音色等能從稿件或設定判斷的寫入摘要，否則一併詢問。
+**條件必填**：選 TTS 時必須由使用者提供口播稿，不代寫、不補寫、不改寫後擅自合成；未指定 TTS 服務時預設使用免費、免 API Key 的 **Edge TTS 台灣口音**（`zh-TW-HsiaoChenNeural` / `zh-TW-YunJheNeural`，自動產出詞級時間戳），亦可指定 Gemini、MiniMax、OpenAI 或自訂適配器（憑證用環境變數，不寫進 brief），按需讀 `references/narration.md`。選使用者錄音時，需要錄音檔或可存取位址；選使用者 BGM／音效時，需要相應檔案。口播語言、音色等能從稿件或設定判斷的寫入摘要，否則一併詢問。
 
 **可選資訊**：相關資料、受眾與發布平台、主題風格、語言與用語。受眾和平台未給時根據內容推斷，並在摘要說明。語言未給時預設台灣繁體中文，使用者要簡體、粵語或英文版時以其指定為準並記入 brief。風格未給時留到風格幀階段提供三個方向。
 
@@ -262,10 +262,12 @@ node <skill>/scripts/inspect.mjs qa <slug>/out/final.mp4 --out <slug>/qa/final \
 
 | 目的 | 指令 |
 |---|---|
-| 裝依賴／查環境／自測 | `sh $S/setup.sh` · `node $S/check-env.mjs` · `cd $S && npm test` |
-| 建專案 | `sh $S/scaffold.sh <slug> [--audio synth\|tone\|layer\|file\|none]` |
+| 裝依賴／查環境／自測 | `node $S/setup.mjs`（或 `sh $S/setup.sh`）· `node $S/check-env.mjs` · `cd $S && npm test` |
+| 建專案 | `node $S/scaffold.mjs <slug> [--audio synth\|tone\|layer\|file\|none]`（亦保留 `sh $S/scaffold.sh`） |
+| 繁中字型下載 | `node $S/fonts.mjs list` · `node $S/fonts.mjs fetch <slug> --family "Noto Sans TC" --from <slug>/brief.md` |
 | 靜幀 + 拼圖 | `node $S/render.mjs <slug> --still 0.5,3,7.2 --sheet` · `--range 0:15:1 --sheet` |
 | 三個方向／封面 | `node $S/render.mjs <slug> --directions a,b,c --at 14.5,2,0` → `qa/directions.png` · `--poster 14.5` → `out/poster.png` |
+| 透明底／社群動圖 | `node $S/render.mjs <slug> --alpha --out out/overlay.webm`（或 `.mov`）· `--gif` · `--webp` |
 | 確定性 | `node $S/render.mjs <slug> --determinism` |
 | 文字框景（審片材料） | `node $S/render.mjs <slug> --text-check [--safe auto\|none\|T,R,B,L]` → `qa/text.json` + 標記圖（build.sh 自動跑） |
 | 拆參考片 | `node $S/inspect.mjs grid <ref> --strips`（剪點 + 節拍網格 + 轉場連續幀）· `heat <ref>`（每段的運動熱圖） |
@@ -303,7 +305,7 @@ node <skill>/scripts/inspect.mjs qa <slug>/out/final.mp4 --out <slug>/qa/final \
 
 - 上游 `manifest.json` 宣告相容：`claude-code`、`claude-ai`、`cursor`、`codex-cli`、`gemini-cli`、`opencode`。
 - 本倉庫版本另適用於 Antigravity 等支援 `SKILL.md` 規範的宿主。
-- **版號**：本檔 `version`（0.2.2）是本倉庫套件版號，與上游版號分開演進；上游升版時，比對 `skills/motion-showreel/` 目錄差異後手動合併，並把上游版號記在這一行。
+- **版號**：本檔 `version`（0.3.0）是本倉庫套件版號，與上游版號分開演進；上游升版時，比對 `skills/motion-showreel/` 目錄差異後手動合併，並把上游版號記在這一行。
 
 <!-- BEGIN:SHARED-CONTRACT（由治理工具自動注入，請勿手改） -->
 

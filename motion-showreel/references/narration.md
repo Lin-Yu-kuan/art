@@ -1,4 +1,4 @@
-# 口播：使用者稿件、真即時間軸與混音
+# 口播：使用者稿件、真實時間軸與混音
 
 有口播時，先準備口播音訊和句段時間軸，再製作畫面，最後配 BGM 和音效。畫面按口播的實際節奏展開；音樂拍點只用於合適的停頓和轉場。
 
@@ -76,6 +76,14 @@ export const MERGE = N.at('s1', '匯合');
 ```
 
 `N.segment(id)` 總能使用有效句段邊界；`at/end/range` 缺詞時間、存在歧義或關鍵詞落在無真實邊界的詞內部時會報錯。此時補人工錨點或改用句級動作，不偽造逐字同步。關鍵詞事件是時間資料，不強制在該詞切鏡；鏡頭可提前建立上下文，事件觸發主體變化。
+
+### Edge TTS（免費、免 API Key，推薦台灣繁中）
+
+需本機 Python 安裝 `edge-tts`（`pip install edge-tts`）。無須任何 API Key，預設台灣女聲 `zh-TW-HsiaoChenNeural`（另可選台灣男聲 `zh-TW-YunJheNeural`、親切女聲 `zh-TW-HsiaoYuNeural`），可透過 `EDGE_TTS_RATE=+5%` 調整語速。會自動輸出 `WordBoundary` 詞級時間戳並寫入 `narration.json`（`wordTimingSource: "tts-word-boundary"`），可直接驅動 `drawSubtitle` 詞級高亮與 `narrationClock.at()`。
+
+### OpenAI
+
+所需環境變數為 `OPENAI_API_KEY`；可選 `OPENAI_TTS_MODEL`（預設 `gpt-4o-mini-tts`）、`OPENAI_TTS_VOICE`（預設 `alloy`）、`OPENAI_TTS_BASE_URL`、`OPENAI_TTS_FORMAT`（預設 `wav`）、`OPENAI_TTS_SPEED`（0.25–4）。
 
 ### Gemini
 

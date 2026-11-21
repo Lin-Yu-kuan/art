@@ -32,14 +32,14 @@
 | Node.js | 18+ |
 | Playwright + Chromium | 由 `scripts/setup.sh` 自動安裝（約 150MB） |
 | ffmpeg | 需系統自備，工具不會代裝 |
-| TTS（可選） | Gemini / MiniMax / OpenAI，或自訂適配器；不用 TTS 則完全離線 |
+| TTS（可選） | Edge TTS（免費台灣口音 + 詞級時間戳）/ Gemini / MiniMax / OpenAI，或自訂適配器；不用 TTS 則完全離線 |
 
 首次使用先跑環境檢查：
 
 ```bash
-sh scripts/setup.sh        # 安裝 Playwright + Chromium，並跑 check-env
-node scripts/check-env.mjs # 只檢查，不安裝
-cd scripts && npm run test:smoke   # 快速自檢（約 15 秒；Windows 需於 Git Bash 執行）
+node scripts/setup.mjs        # 安裝 Playwright + Chromium，並跑 check-env（亦保留 sh scripts/setup.sh）
+node scripts/check-env.mjs    # 只檢查，不安裝
+cd scripts && npm run test:smoke   # 快速自檢（Windows PowerShell 可直接執行）
 cd scripts && npm run test:full    # 完整測試（含整片渲染，10–30 分鐘）
 ```
 
@@ -158,6 +158,14 @@ motion-showreel/
 | `npm test` 跑很久 | 測試真的在渲幀與編碼 | 用 `npm run test:smoke` 快速自檢，`npm run test:full` 交付前跑 |
 
 ## Changelog
+
+### 0.3.0
+
+- **台灣繁體中文字型體系**：新增 `scripts/fonts.mjs` 一鍵下載開源繁中 `.woff2` 字型子集與 `fonts.css`；`stack.md` 與 `starter/index.html` 改為台灣繁中預設（`Noto Sans TC` / `PingFang TC` / `Microsoft JhengHei`）。
+- **Windows 原生跨平台腳本**：新增 `scripts/setup.mjs`、`scripts/scaffold.mjs` 與 `assets/starter/build.mjs`，Windows PowerShell 可直接執行且 `npm run test:smoke` 不再依賴 `sh`。
+- **動畫與字幕高階原語**：`motion.js` 新增繁中標點避頭尾斷行 `wrapText`、自動詞級高亮字幕 `drawSubtitle`、四向遮罩揭示 `maskReveal`、SVG 路徑取樣 `pathSampler` 與確定性顆粒 `grainCanvas`；`recipes.md` 補入動態字幕與「AI 生圖＋視差動效」實戰範本。
+- **透明底與社群動圖輸出**：`render.mjs` 新增 `--alpha`（WebM VP9 `yuva420p` / ProRes 4444 `.mov`）、`--gif` 與 `--webp` 輸出模式。
+- **免費台灣口音 TTS**：`narration-providers.mjs` 新增免 API Key 的 `edge` provider（預設 `zh-TW-HsiaoChenNeural`，自動輸出詞級時間戳）並補齊 `openai` provider；`narrationClock` 原生支援 `tts-word-boundary`。
 
 ### 0.2.2
 

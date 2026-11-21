@@ -191,3 +191,202 @@ export function drawBoxes(ctx, cam, boxes) {
 export async function loadFonts(specs = []) { await Promise.all(specs.map(s => document.fonts.load(s))); await document.fonts.ready; }
 /** Load an image and decode it before READY */
 export const loadImage = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => i.decode().then(() => res(i), () => res(i)); i.onerror = rej; i.src = src; });
+
+// ── typography, subtitles, masks, paths & grain ──
+const NO_LINE_START = new Set([...'，。！？、；：」』）】》〉…—,.!?;:)]}']);
+const NO_LINE_END = new Set([...'「『（【《〈([{\'']);
+
+/**
+ * Wrap mixed CJK / Latin text to fit `maxWidth` with Traditional Chinese kinsoku punctuation rules.
+ * Returns an array of lines (honours explicit `\n`).
+ */
+export function wrapText(ctx, text, maxWidth) {
+  const out = [];
+  for (const para of String(text ?? '').split('\n')) {
+    if (!para) { out.push(''); continue; }
+    // Tokenize into Latin words/spaces or single CJK/symbol characters so English words stay unbroken.
+    const tokens = para.match(/[A-Za-z0-9_.-]+|\s+|./gu) || [];
+    let line = '';
+    for (const tok of tokens) {
+      if (!line && /^\s+$/.test(tok)) continue;
+      const cand = line + tok;
+      if (line && ctx.measureText(cand).width > maxWidth) {
+        let split = line;
+        if (NO_LINE_START.has(tok) && [...line].length > 1) {
+          out.push(line + tok);
+          line = '';
+          continue;
+        }
+        const chars = [...split];
+        if (chars.length > 1 && NO_LINE_END.has(chars.at(-1))) {
+          const carry = chars.pop();
+          out.push(chars.join('').trimEnd());
+          line = carry + tok.trimStart();
+          continue;
+        }
+        out.push(split.trimEnd());
+        line = tok.trimStart();
+      } else {
+        line = cand;
+      }
+    }
+    if (line.trim()) out.push(line.trimEnd());
+  }
+  return out;
+}
+
+/**
+ * Draw deterministic subtitles from narration.json (supports word-level karaoke highlight when `words` exist).
+ * Automatically reserves 14% bottom safe zone on vertical (H > W) frames and 8% on landscape.
+ */
+export function drawSubtitle(ctx, { W, H, t, narration, style = {} } = {}) {
+  if (!narration?.segments?.length) return;
+  const segNow = narration.segments.find(s => t >= s.start && t <= s.end);
+  if (!segNow) return;
+  const U = Math.min(W, H) / 1080;
+  const {
+    fontSize = (H > W ? 48 : 42) * U,
+    fontFamily = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif',
+    fontWeight = 700,
+    maxWidth = W * (H > W ? 0.84 : 0.72),
+    bottom = H * (H > W ? 0.14 : 0.08),
+    textColor = '#FFFFFF',
+    activeColor = '#FFE14D',
+    bgColor = 'rgba(14, 14, 18, 0.72)',
+    padX = 24 * U,
+    padY = 14 * U,
+    radius = 14 * U,
+    lineHeight = 1.38,
+    fade = 0.12,
+  } = style;
+
+  const alpha = win(t, segNow.start, segNow.end, Math.min(fade, (segNow.end - segNow.start) / 3), Math.min(fade, (segNow.end - segNow.start) / 3));
+  if (alpha <= 0.01) return;
+
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+
+  const lines = wrapText(ctx, segNow.text, maxWidth);
+  const lineH = fontSize * lineHeight;
+  const lineWidths = lines.map(l => ctx.measureText(l).width);
+  const boxW = Math.max(...lineWidths, 0) + padX * 2;
+  const boxH = lines.length * lineH + padY * 2;
+  const boxX = (W - boxW) / 2;
+  const boxY = H - bottom - boxH;
+
+  if (bgColor) {
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, boxW, boxH, radius);
+    ctx.fill();
+  }
+
+  // Build character-level active lookup from measured word boundaries if available (never interpolated).
+  const activeChar = new Set();
+  if (Array.isArray(segNow.words) && segNow.words.length) {
+    const clean = s => String(s).replace(/[\p{P}\p{Z}\s]/gu, '');
+    const spokenChars = [];
+    for (let i = 0; i < segNow.text.length; i++) if (clean(segNow.text[i])) spokenChars.push(i);
+    let cursor = 0;
+    for (const w of segNow.words) {
+      const len = [...clean(w.text)].length;
+      if (t >= w.start) for (let k = 0; k < len && cursor + k < spokenChars.length; k++) activeChar.add(spokenChars[cursor + k]);
+      cursor += len;
+    }
+  }
+
+  let charIndex = 0;
+  lines.forEach((line, li) => {
+    const y = boxY + padY + (li + 0.5) * lineH;
+    let x = (W - lineWidths[li]) / 2;
+    for (const ch of line) {
+      const w = ctx.measureText(ch).width;
+      const idx = segNow.text.indexOf(ch, charIndex);
+      if (idx >= 0) charIndex = idx + ch.length;
+      ctx.fillStyle = activeChar.has(idx) ? activeColor : textColor;
+      ctx.fillText(ch, x, y);
+      x += w;
+    }
+  });
+  ctx.restore();
+}
+
+/**
+ * Directional clip reveal for [x, y, w, h] at progress k (0..1) from 'up' | 'down' | 'left' | 'right'.
+ */
+export function maskReveal(ctx, [x, y, w, h], k, dir = 'up', drawFn = () => {}) {
+  const p = clamp(k);
+  if (p <= 0) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  const dx = dir === 'left' ? (1 - p) * w : dir === 'right' ? (p - 1) * w : 0;
+  const dy = dir === 'up' ? (1 - p) * h : dir === 'down' ? (p - 1) * h : 0;
+  ctx.translate(dx, dy);
+  drawFn();
+  ctx.restore();
+}
+
+/**
+ * Pre-sample an SVG path `d` string or array of [x, y] points into a stateless lookup sampler(k -> {x, y, angle, length}).
+ */
+export function pathSampler(dOrPoints, steps = 200) {
+  const pts = [];
+  let length = 0;
+  if (typeof dOrPoints === 'string') {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const pathEl = document.createElementNS(svgNS, 'path');
+    pathEl.setAttribute('d', dOrPoints);
+    length = pathEl.getTotalLength();
+    for (let i = 0; i <= steps; i++) {
+      const p = pathEl.getPointAtLength((i / steps) * length);
+      pts.push([p.x, p.y]);
+    }
+  } else {
+    const src = dOrPoints;
+    const cum = [0];
+    for (let i = 1; i < src.length; i++) {
+      length += Math.hypot(src[i][0] - src[i - 1][0], src[i][1] - src[i - 1][1]);
+      cum.push(length);
+    }
+    for (let i = 0; i <= steps; i++) {
+      const target = (i / steps) * length;
+      let j = 1; while (j < cum.length - 1 && cum[j] < target) j++;
+      const segLen = Math.max(1e-6, cum[j] - cum[j - 1]);
+      const f = clamp((target - cum[j - 1]) / segLen);
+      pts.push([lerp(src[j - 1][0], src[j][0], f), lerp(src[j - 1][1], src[j][1], f)]);
+    }
+  }
+  return {
+    length,
+    points: pts,
+    sample(k) {
+      const idx = clamp(k) * (pts.length - 1);
+      const i0 = Math.floor(idx), i1 = Math.min(pts.length - 1, i0 + 1), f = idx - i0;
+      const x = lerp(pts[i0][0], pts[i1][0], f), y = lerp(pts[i0][1], pts[i1][1], f);
+      const prev = pts[Math.max(0, i0 - 1)], next = pts[Math.min(pts.length - 1, i0 + 1)];
+      return { x, y, angle: Math.atan2(next[1] - prev[1], next[0] - prev[0]), length };
+    },
+  };
+}
+
+/**
+ * Deterministic offscreen film/paper grain canvas (create once outside render(t), tile/offset inside render(t)).
+ */
+export function grainCanvas(size = 256, seed = 1, alpha = 22) {
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const g = c.getContext('2d');
+  const img = g.createImageData(size, size);
+  const rand = rng(seed);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.floor(rand() * 256);
+    img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = alpha;
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}

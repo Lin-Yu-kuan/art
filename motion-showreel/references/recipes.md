@@ -293,3 +293,62 @@ drawBoxes(ctx, cam, boxes);
 - 畫家演算法按到相機的水平距離從遠到近排序，適合互相分開的體塊；體塊互相穿插或者要真實光影、陰影時，換 Three.js。
 - 世界座標裡 y 朝上、地面 y = 0；yaw = 0 時相機在 +z 一側，`pz` 是正面。
 - 大字和體塊同屏時先定「文字禁入區」（stack.md 第 4 節），用 `cx / cy` 和島的半徑把體塊擋在外面，渲幾張靜幀確認。
+
+---
+
+## 16. 繁體中文動態字幕（`drawSubtitle` 搭配 `narration.json`）
+
+口播驅動影片可直接引用 `motion.js` 內建的 `drawSubtitle`，自動套用繁中標點避頭尾規則、豎屏安全區（底部預留 14%），並在有詞級時間戳時自動高亮正在念到的字詞：
+
+```js
+import { drawSubtitle } from './motion.js';
+const narration = await fetch('./audio/narration.json').then(r => r.json());
+
+// 在 render(t) 最後一層呼叫，確保不被其他圖層遮擋
+drawSubtitle(ctx, {
+  W, H, t, narration,
+  style: {
+    fontFamily: '"Noto Sans TC", "PingFang TC", sans-serif',
+    activeColor: '#FFE14D',
+    bgColor: 'rgba(14, 14, 18, 0.78)',
+  },
+});
+```
+
+---
+
+## 17. 混合視覺工作流：AI 生圖插畫／背景 ＋ 程式碼視差動效
+
+當主題需要具象插畫、產品氛圍或藝術肌理（純幾何向量容易顯得單薄）時，先用 `image-generator` 生成 **1～3 張高解析風格底圖／去背主體**放進 `<project>/assets/`，再用程式碼做多層視差（Parallax）、光影呼吸與動態排版：
+
+```js
+import { loadImage, camera, grainCanvas, maskReveal, glide, seg } from './motion.js';
+
+const bgImg = await loadImage('./assets/scene-bg.png');
+const heroImg = await loadImage('./assets/hero-cutout.png');
+const grain = grainCanvas(256, 7, 16);
+
+window.render = t => {
+  ctx.clearRect(0, 0, W, H);
+  // 遠景底圖：緩慢推進（zoom 1.0 → 1.08）製造電影鏡頭呼吸感
+  ctx.save();
+  camera(ctx, W, H, { zoom: 1 + 0.08 * glide(seg(t, 0, 8)) });
+  ctx.drawImage(bgImg, 0, 0, W, H);
+  ctx.restore();
+
+  // 主體層：視差放大倍率更高，製造前後景深分離
+  ctx.save();
+  camera(ctx, W, H, { zoom: 1 + 0.16 * glide(seg(t, 0, 8)) });
+  ctx.drawImage(heroImg, W * 0.25, H * 0.15, W * 0.5, H * 0.7);
+  ctx.restore();
+
+  // 前景遮罩大字與確定性底片顆粒
+  maskReveal(ctx, [W * 0.08, H * 0.72, W * 0.84, 140 * U], glide(seg(t, 0.5, 1.4)), 'up', () => {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 ${96 * U}px "Noto Sans TC", sans-serif`;
+    ctx.fillText('質感升級', W * 0.08, H * 0.8);
+  });
+  const ox = -((Math.floor(t * 24) * 53) % 256), oy = -((Math.floor(t * 24) * 97) % 256);
+  ctx.drawImage(grain, ox, oy, W + 256, H + 256);
+};
+```

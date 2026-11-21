@@ -61,19 +61,20 @@ export function narrationClock(narration) {
     previousEnd = input.end;
     const entry = { segment: Object.freeze(s), anchors: [], words: [], chars: characters(s.text) };
     if (input.words !== undefined || input.wordTimingSource !== undefined) {
-      if (input.wordTimingSource !== 'asr' || !Array.isArray(input.words) || !input.words.length) fail(`${s.id}: words require wordTimingSource: 'asr' and nonempty measured words`);
+      if (!['asr', 'tts-word-boundary'].includes(input.wordTimingSource) || !Array.isArray(input.words) || !input.words.length) fail(`${s.id}: words require wordTimingSource: 'asr' | 'tts-word-boundary' and nonempty measured words`);
       let cursor = 0, last = s.start;
       for (const [i, word] of input.words.entries()) {
         interval(word, s, `${s.id} word ${i + 1}`);
-        if (word.start < last - EPS) fail(`${s.id}: ASR word intervals overlap or run backwards`);
+        if (word.start < last - EPS) fail(`${s.id}: word intervals overlap or run backwards`);
         const text = characters(word.text).map(c => c.char).join('');
-        if (!text.length) fail(`${s.id}: an ASR word must contain spoken text`);
+        if (!text.length) fail(`${s.id}: a timed word must contain spoken text`);
         const count = [...text].length;
         entry.words.push({ text, start: word.start, end: word.end, first: cursor, after: cursor + count });
         cursor += count; last = word.end;
       }
-      if (entry.words.map(w => w.text).join('') !== entry.chars.map(c => c.char).join('')) fail(`${s.id}: ASR words do not exactly cover the script text; correct the transcript or supply manual anchors`);
+      if (entry.words.map(w => w.text).join('') !== entry.chars.map(c => c.char).join('')) fail(`${s.id}: timed words do not exactly cover the script text; correct the transcript or supply manual anchors`);
     }
+    entry.wordSource = input.wordTimingSource === 'tts-word-boundary' ? 'tts-words' : 'asr-words';
     if (input.anchors !== undefined) {
       if (!Array.isArray(input.anchors)) fail(`${s.id}: anchors must be an array of explicit manual marks`);
       const keys = new Set();
@@ -102,7 +103,7 @@ export function narrationClock(narration) {
     const first = offsets[0].i, after = offsets.at(-1).i + 1;
     const startWord = entry.words.find(w => w.first === first), endWord = entry.words.find(w => w.after === after);
     if (!startWord || !endWord) fail(`${s.id}: keyword ${JSON.stringify(keyword)} splits an ASR word; provide a manual anchor instead of estimating within the word`);
-    return Object.freeze({ segmentId: s.id, text: keyword, occurrence: hit.occurrence, start: startWord.start, end: endWord.end, source: 'asr-words' });
+    return Object.freeze({ segmentId: s.id, text: keyword, occurrence: hit.occurrence, start: startWord.start, end: endWord.end, source: entry.wordSource || 'asr-words' });
   };
   return Object.freeze({
     duration,

@@ -20,7 +20,7 @@
 | 技能 | 版本 | 觸發詞 |
 |---|---|---|
 | [`ai-food-shorts`](./ai-food-shorts) | v0.2.1 | `美食短片`、`AI做菜`、`food shorts`、`Google Flow` |
-| [`motion-showreel`](./motion-showreel) | v0.2.2 | `動態圖形`、`motion graphics`、`片頭動畫`、`動效影片`、`code video` |
+| [`motion-showreel`](./motion-showreel) | v0.3.0 | `動態圖形`、`motion graphics`、`片頭動畫`、`動效影片`、`code video` |
 
 ---
 
@@ -34,7 +34,7 @@
 | 技能名稱 | 版本 | 核心功能簡介 | 子類別 | 類型 | 說明文件 |
 |---|---|---|---|---|---|
 | [**ai-food-shorts**](./ai-food-shorts) | `v0.2.1` | 半自動 AI 美食 Shorts 流程：9:16 關鍵影格文生圖、Google Flow 圖生影 Prompt、FFmpeg 一鍵成片（含字幕與響度正規化）。 | `影像創作 / 短影音` | 📦 套件 | [查看說明](./ai-food-shorts/README.md) |
-| [**motion-showreel**](./motion-showreel) | `v0.2.2` | 用程式碼逐幀渲染動態圖形影片：確定性 render(t) 加 ffmpeg 合成，輸出 MP4 與可重建原始碼，不需顯示卡。 | `影像創作 / 動態圖形` | 📦 套件 | [查看說明](./motion-showreel/README.md) |
+| [**motion-showreel**](./motion-showreel) | `v0.3.0` | 用程式碼逐幀渲染動態圖形影片：確定性 render(t) 加 ffmpeg 合成，輸出 MP4 與可重建原始碼，不需顯示卡。 | `影像創作 / 動態圖形` | 📦 套件 | [查看說明](./motion-showreel/README.md) |
 
 ---
 

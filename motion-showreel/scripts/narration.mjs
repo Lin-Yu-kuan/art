@@ -4,13 +4,13 @@ import { args } from './lib/browser.mjs';
 import { synthesizeNarration, importNarration, mixNarration, checkNarration } from './lib/narration.mjs';
 
 const HELP = `Narration: user script/audio → actual segment timings → voice-led pictures → mix
-  node narration.mjs tts <project> --script user.txt --source user --provider gemini|minimax|/absolute/custom.mjs --model MODEL --voice VOICE
+  node narration.mjs tts <project> --script user.txt --source user [--provider edge|gemini|minimax|openai|/absolute/custom.mjs] [--model MODEL] [--voice VOICE]
   node narration.mjs import <project> --audio voice.wav [--timestamps voice.srt|segments.json | --transcriber /absolute/asr.mjs]
   node narration.mjs mix <project> --bgm music.wav --bgm-source ai|user --sfx fx.wav --sfx-source ai|user [--duration SECONDS]
   node narration.mjs check <project> [--duration SECONDS --audio audio/final.wav]
   Disable tracks: --bgm none --bgm-source none --sfx none --sfx-source none --narration none
   Optional: tts --duration SECONDS --max-chars 500 --retries 2; mix --bgm-gain 0.35 --sfx-gain 0.5 --duck-db -16 --out audio/final.wav
-  Credentials: GEMINI_API_KEY / MINIMAX_API_KEY (environment only).
+  Credentials: GEMINI_API_KEY / MINIMAX_API_KEY / OPENAI_API_KEY (environment only; edge needs no key).
   TTS only speaks user-provided text. Missing sentence timestamps are explicitly unresolved.
   Outputs: audio/narration.wav, audio/narration.json; mix → audio/final.wav, audio/mix.json.`;
 const { pos, opt } = args(process.argv.slice(2));
@@ -33,10 +33,11 @@ try {
     }
     let result;
     if (command === 'tts') {
-      if (!opt.script || !opt.provider) throw new Error('tts requires --script, --source user, and --provider');
+      if (!opt.script) throw new Error('tts requires --script and --source user');
+      const provider = opt.provider || 'edge';
       const retries = number('retries', 2);
       if (!Number.isInteger(retries) || retries < 0 || retries > 5) throw new Error('--retries must be an integer from 0 to 5');
-      result = await synthesizeNarration({ root, script: opt.script, source: opt.source, provider: opt.provider, model: opt.model, voice: opt.voice, duration: number('duration'), maxChars: number('max-chars', 500), retries });
+      result = await synthesizeNarration({ root, script: opt.script, source: opt.source, provider, model: opt.model, voice: opt.voice, duration: number('duration'), maxChars: number('max-chars', 500), retries });
     } else if (command === 'import') {
       if (!opt.audio) throw new Error('import requires --audio');
       result = await importNarration({ root, audio: opt.audio, timestamps: opt.timestamps, transcriber: opt.transcriber });

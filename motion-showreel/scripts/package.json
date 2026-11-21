@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "npm run test:full",
-    "test:smoke": "node --test test/render-context.test.mjs test/narration-clock.test.mjs test/starter.test.mjs",
+    "test:smoke": "node --test test/render-context.test.mjs test/narration-clock.test.mjs test/starter.test.mjs test/upgrades.test.mjs",
     "test:full": "node --test --test-concurrency=1 test/*.test.mjs"
   }
 }

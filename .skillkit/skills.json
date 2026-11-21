@@ -49,7 +49,7 @@
         }
       ],
       "path": "motion-showreel",
-      "sha256": "60d36cf8d7aaddf4c27ea0b03a2ad0f61b9ad18847f68cdfd7a6a8b9ac913c50",
+      "sha256": "dc55203fde030e07dbd3a7488f1945d1a94cb8912e50aebc480535c3cb150a82",
       "triggers": [
         "動態圖形",
         "motion graphics",
@@ -63,7 +63,7 @@
         "請使用 motion-showreel 製作一支 <主題> 的 <時長> 動態圖形短片",
         "請使用 motion-showreel 把 <腳本或文章> 做成帶旁白的解說影片"
       ],
-      "version": "0.2.2"
+      "version": "0.3.0"
     }
   ]
 }

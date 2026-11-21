@@ -79,22 +79,35 @@ export async function synthesizeNarration({ root, script, source, provider: name
   for (const [i, segment] of input.segments.entries()) {
     const key = sha(JSON.stringify({ text: segment.text, provider: provider.cacheKey, format: 's16le-48000-stereo-v1' }));
     const file = path.join(cache, `${key}.wav`), meta = `${file}.json`;
-    let duration, valid = false;
+    let duration, words, valid = false;
     if (present(file) && present(meta)) {
-      try { const saved = JSON.parse(fs.readFileSync(meta)); valid = saved.sha256 === sha(fs.readFileSync(file)); if (valid) duration = audioDuration(file); }
+      try { const saved = JSON.parse(fs.readFileSync(meta)); valid = saved.sha256 === sha(fs.readFileSync(file)); if (valid) { duration = audioDuration(file); words = saved.words; } }
       catch { valid = false; }
     }
     if (!valid) {
       await retry(async () => {
         const raw = tempFile(cache, '.bin'), wav = tempFile(cache, '.wav');
         try {
-          await provider.synthesize({ text: segment.text, outFile: raw });
+          const res = await provider.synthesize({ text: segment.text, outFile: raw });
           duration = normalized(raw, wav);
-          fs.renameSync(wav, file); json(meta, { sha256: sha(fs.readFileSync(file)), duration });
+          words = Array.isArray(res?.words) ? res.words : undefined;
+          fs.renameSync(wav, file); json(meta, { sha256: sha(fs.readFileSync(file)), duration, ...(words ? { words } : {}) });
         } finally { fs.rmSync(raw, { force: true }); fs.rmSync(wav, { force: true }); }
       }, { retries, delayMs: retryDelayMs, onRetry: attempt => log(`narration ${i + 1}/${input.segments.length}: retry ${attempt}`) });
     }
-    segments.push({ ...segment, start: round(clock), end: round(clock + duration), file: rel(p.root, file) });
+    const segStart = round(clock), segEnd = round(clock + duration);
+    const segObj = { ...segment, start: segStart, end: segEnd, file: rel(p.root, file) };
+    if (Array.isArray(words) && words.length) {
+      const shifted = words.map(w => ({ text: String(w.text || ''), start: round(segStart + Number(w.start)), end: round(Math.min(segEnd, segStart + Number(w.end))) }));
+      try {
+        narrationClock({ duration: segEnd, segments: [{ id: segment.id, text: segment.text, start: segStart, end: segEnd, wordTimingSource: 'tts-word-boundary', words: shifted }] });
+        segObj.wordTimingSource = 'tts-word-boundary';
+        segObj.words = shifted;
+      } catch {
+        // If TTS word boundaries do not cleanly cover the original text, fall back to sentence timing instead of failing or fabricating.
+      }
+    }
+    segments.push(segObj);
     clock += duration;
     if (clock > limit + 0.002 || (clock >= limit - 0.000001 && i < input.segments.length - 1)) throw new Error(`Narration exceeds the ${limit}s target or leaves no time for remaining script. No further TTS calls will be made; confirm script/duration with the user. Cached segments are retained`);
     log(`narration ${i + 1}/${input.segments.length}: ${valid ? 'cached' : 'built'}, ${duration.toFixed(3)}s`);

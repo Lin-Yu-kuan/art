@@ -9,7 +9,7 @@
 // Video
 //   node render.mjs <project> [--out out/video.mp4] [--size 1920x1080] [--fps 30] [--workers 3]
 //                   [--start 0] [--duration D] [--subframes 1] [--shutter 0.5] [--dpr 1]
-//                   [--audio audio/music.wav] [--grain 0] [--crf 16] [--png] [--q "k=v&k2=v2"]
+//                   [--audio audio/music.wav] [--grain 0] [--crf 16] [--png] [--alpha] [--gif] [--webp] [--q "k=v&k2=v2"]
 // Stills (review frames, PNG) and contact sheet
 //   node render.mjs <project> --still 0.5,2,7.25 [--out qa/stills] [--sheet]
 //   node render.mjs <project> --range 0:15:1 [--out qa/stills] [--sheet]
@@ -50,7 +50,10 @@ const DPR = +(opt.dpr || 1);
 if (!(FPS > 0 && FPS <= 240)) die(`bad --fps ${opt.fps}`);
 if (!(DPR >= 1 && DPR <= 4)) die(`bad --dpr ${opt.dpr} (1–4)`);
 const QUERY = typeof opt.q === 'string' ? opt.q : '';
-const fmt = opt.png ? 'png' : 'jpeg';
+const ALPHA = Boolean(opt.alpha);
+const extOut = typeof opt.out === 'string' ? path.extname(opt.out).toLowerCase() : '';
+const MODE = opt.gif || extOut === '.gif' ? 'gif' : opt.webp || extOut === '.webp' ? 'webp' : 'video';
+const fmt = opt.png || ALPHA ? 'png' : 'jpeg';
 
 const chromium = await loadChromium(target.root);
 const { server, port } = await serve(target.root);
@@ -63,7 +66,7 @@ async function shoot(page, t, type = fmt, frameTime = t) {
   await page.evaluate(({ t, frameTime, fps }) => window.RENDER_CONTEXT === true
     ? window.render(t, { frameTime, fps })
     : window.render(t), { t, frameTime, fps: FPS });
-  return await page.screenshot({ type, ...(type === 'jpeg' ? { quality: 95 } : {}), clip: { x: 0, y: 0, width: W, height: H } });
+  return await page.screenshot({ type, ...(type === 'jpeg' ? { quality: 95 } : {}), ...(ALPHA ? { omitBackground: true } : {}), clip: { x: 0, y: 0, width: W, height: H } });
 }
 
 if (opt.poster !== undefined) await poster();
@@ -305,7 +308,11 @@ async function video() {
   const GRAIN = +(opt.grain || 0);
   const audio = typeof opt.audio === 'string' ? path.resolve(opt.audio) : null;
   if (audio && !fs.existsSync(audio)) die(`audio not found: ${audio}`);
-  const out = path.resolve(typeof opt.out === 'string' ? opt.out : path.join(target.root, 'out', 'video.mp4'));
+  if ((MODE === 'gif' || MODE === 'webp') && audio) die(`--audio is not supported for ${MODE.toUpperCase()} output`);
+  const defaultOut = MODE === 'gif' ? 'out/video.gif' : MODE === 'webp' ? 'out/video.webp' : ALPHA ? 'out/video.webm' : 'out/video.mp4';
+  const out = path.resolve(typeof opt.out === 'string' ? opt.out : path.join(target.root, defaultOut));
+  const outExt = path.extname(out).toLowerCase();
+  if (ALPHA && MODE === 'video' && !['.webm', '.mov'].includes(outExt)) die('--alpha video requires a .webm or .mov output path');
   fs.mkdirSync(path.dirname(out), { recursive: true });
   // one writer per output file: a second render to the same --out is refused (stale locks from dead pids are taken over)
   const lock = out + '.lock';
@@ -331,17 +338,28 @@ async function video() {
   vf.push(`setpts=N/(${FPS}*TB)`);
   if (DPR !== 1) vf.push(`scale=${W}:${H}:flags=lanczos`);
   if (GRAIN > 0) vf.push(`noise=c0s=${GRAIN}:allf=t`);
-  vf.push('scale=out_color_matrix=bt709:out_range=tv', 'format=yuv420p');
+  if (ALPHA || MODE === 'gif' || MODE === 'webp') {
+    vf.push(ALPHA ? 'format=rgba' : 'format=rgb24');
+  } else {
+    vf.push('scale=out_color_matrix=bt709:out_range=tv', 'format=yuv420p');
+  }
   let done = 0;
-  console.log(`rendering ${TOTAL} frames × ${SUB} sample(s) @ ${W}x${H} ${FPS}fps with ${WK} worker(s)…`);
+  console.log(`rendering ${TOTAL} frames × ${SUB} sample(s) @ ${W}x${H} ${FPS}fps (${MODE}${ALPHA ? '+alpha' : ''}) with ${WK} worker(s)…`);
+
+  const segExt = (MODE === 'gif' || MODE === 'webp') ? '.mkv' : (ALPHA ? (outExt === '.mov' ? '.mov' : '.webm') : '.mp4');
+  const codecArgs = (() => {
+    if (MODE === 'gif' || MODE === 'webp') return ['-c:v', 'ffv1'];
+    if (ALPHA && outExt === '.mov') return ['-c:v', 'prores_ks', '-profile:v', '4444', '-pix_fmt', 'yuva444p10le'];
+    if (ALPHA) return ['-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-b:v', '0', '-crf', String(CRF), '-auto-alt-ref', '0'];
+    return ['-c:v', 'libx264', '-preset', 'medium', '-crf', String(CRF), '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709'];
+  })();
 
   await Promise.all([...Array(WK)].map(async (_, k) => {
     const a = k * per, b = Math.min(TOTAL, a + per);
     if (a >= b) return;
     const page = await open();
     const ff = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-c:v', fmt === 'png' ? 'png' : 'mjpeg', '-framerate', String(FPS * SUB), '-i', '-',
-      '-vf', vf.join(','), '-r', String(FPS), '-c:v', 'libx264', '-preset', 'medium', '-crf', String(CRF),
-      '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', `seg_${k}.mp4`], { cwd: tmp, stdio: ['pipe', 'inherit', 'inherit'] });
+      '-vf', vf.join(','), '-r', String(FPS), ...codecArgs, `seg_${k}${segExt}`], { cwd: tmp, stdio: ['pipe', 'inherit', 'inherit'] });
     procs.add(ff);
     let failed = null, exited = false;
     const closed = new Promise(r => ff.on('close', code => { exited = true; procs.delete(ff); if (code !== 0) failed ??= `ffmpeg exited with code ${code}`; r(code); }));
@@ -362,20 +380,39 @@ async function video() {
   }));
   if (aborted) fail(aborted + ' (nothing written)');
 
-  const segs = [...Array(WK).keys()].filter(k => k * per < TOTAL).map(k => `file 'seg_${k}.mp4'`).join('\n');
+  const segs = [...Array(WK).keys()].filter(k => k * per < TOTAL).map(k => `file 'seg_${k}${segExt}'`).join('\n');
   fs.writeFileSync(path.join(tmp, 'list.txt'), segs);
+  const joined = path.join(tmp, `joined${segExt}`);
   const cmd = ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', 'list.txt'];
-  if (audio) cmd.push('-ss', String(start), '-i', audio, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '256k', '-af', 'apad', '-t', String(TOTAL / FPS));
+  if (audio) cmd.push('-ss', String(start), '-i', audio, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', ALPHA && outExt === '.webm' ? 'libopus' : 'aac', '-b:a', '256k', '-af', 'apad', '-t', String(TOTAL / FPS));
   else cmd.push('-c', 'copy');
-  cmd.push('-movflags', '+faststart', 'joined.mp4');
+  if (ALPHA && outExt === '.webm') cmd.push('-metadata:s:v:0', 'alpha_mode=1');
+  if (segExt === '.mp4' || segExt === '.mov') cmd.push('-movflags', '+faststart');
+  cmd.push(path.basename(joined));
   try { execFileSync('ffmpeg', cmd, { cwd: tmp, stdio: ['ignore', 'inherit', 'inherit'] }); }
   catch { fail('ffmpeg could not join the segments'); }
-  // verify before publishing: frame count and duration must match what was asked for
-  const joined = path.join(tmp, 'joined.mp4');
-  let got = 0;
-  try { got = parseInt(execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-count_packets', '-show_entries', 'stream=nb_read_packets', '-of', 'csv=p=0', joined]).toString(), 10); } catch {}
-  if (!Number.isFinite(got) || Math.abs(got - TOTAL) > 1) fail(`output has ${got} frames, expected ${TOTAL}; not published`);
-  fs.renameSync(joined, out);
+
+  if (MODE === 'gif') {
+    const gifOut = path.join(tmp, 'out.gif');
+    try {
+      execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', joined, '-vf', 'split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3', '-loop', '0', gifOut], { cwd: tmp, stdio: ['ignore', 'inherit', 'inherit'] });
+    } catch { fail('ffmpeg failed to encode GIF'); }
+    if (!fs.existsSync(gifOut) || !fs.statSync(gifOut).size) fail('empty GIF output');
+    fs.renameSync(gifOut, out);
+  } else if (MODE === 'webp') {
+    const webpOut = path.join(tmp, 'out.webp');
+    try {
+      execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', joined, '-c:v', 'libwebp_anim', '-loop', '0', '-lossless', '0', '-q:v', '85', ...(ALPHA ? ['-pix_fmt', 'yuva420p'] : []), webpOut], { cwd: tmp, stdio: ['ignore', 'inherit', 'inherit'] });
+    } catch { fail('ffmpeg failed to encode animated WebP'); }
+    if (!fs.existsSync(webpOut) || !fs.statSync(webpOut).size) fail('empty WebP output');
+    fs.renameSync(webpOut, out);
+  } else {
+    // verify before publishing: frame count and duration must match what was asked for
+    let got = 0;
+    try { got = parseInt(execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-count_packets', '-show_entries', 'stream=nb_read_packets', '-of', 'csv=p=0', joined]).toString(), 10); } catch {}
+    if (!Number.isFinite(got) || Math.abs(got - TOTAL) > 1) fail(`output has ${got} frames, expected ${TOTAL}; not published`);
+    fs.renameSync(joined, out);
+  }
   const secs = (Date.now() - t0) / 1000;
   console.log(`done ${out}\n  ${TOTAL} frames, ${(TOTAL / FPS).toFixed(2)}s, ${secs.toFixed(1)}s wall (${(secs * 1000 / TOTAL / SUB).toFixed(0)} ms/sample)${audio ? ', audio muxed' : ''}`);
 }

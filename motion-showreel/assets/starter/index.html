@@ -1,11 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
 <meta charset="utf-8">
 <title>showreel</title>
 <style>
-  /* Self-host fonts in ./fonts and declare them here, e.g.
-     @font-face { font-family: "Display"; src: url(fonts/Display.woff2) format("woff2"); font-weight: 800; } */
+  /* 使用 node scripts/fonts.mjs fetch <project> 下載繁中字型至 ./fonts 後，即可引入 ./fonts/fonts.css */
   html, body { margin: 0; background: #000; overflow: hidden; }
   canvas { display: block; }
 </style>
@@ -24,7 +23,7 @@ const ctx = setupCanvas(document.getElementById('c'), W, H);
 const U = Math.min(W, H) / 1080;                      // layout unit: design at 1080 short side, scales to any aspect
 const C = { paper: '#ECE8E1', ink: '#121212', accent: '#FF4A1C' };
 const WORD = 'MOTION';
-const FONT = s => `800 ${s}px "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif`;
+const FONT = s => `800 ${s}px "Archivo Black", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
 const shot = id => SHOTS.find(s => s.id === id);
 const ticks = CUES.filter(c => c.sfx === 'tick').map(c => c.t);
 const HIT = CUES.find(c => c.sfx === 'impact').t;

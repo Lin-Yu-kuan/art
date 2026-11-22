@@ -8,6 +8,7 @@ __pycache__/
 
 # --- 技能執行期產物 ---
 node_modules/
+motion-showreel/myResource/
 
 # --- Agent 本機工作記憶 ---
 .workbuddy-ai/
